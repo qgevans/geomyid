@@ -17,5 +17,7 @@ The path of the file. Defaults to actual path relative to the local gopher root.
 What server the file is hosted on. Defaults to the local host.
 ##### port
 What port the file is available on. Defaults to the port specified to (serve) or 70.
+##### message
+Only valid for directories. Specifies a file to be prepended to this directory's listing. Defaults to none.
 
 Directory listings are sorted case-sensitively by the determined selector.
