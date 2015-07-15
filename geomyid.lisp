@@ -69,7 +69,6 @@
 	 (otherwise #\0)))
       #\1))
 
-
 (defun write-text-resource (stream pathname)
   (with-open-file (resource pathname)
     (handler-case (loop
@@ -181,7 +180,9 @@
 		     :type :wild)))
 		collecting (resource file))
 	     #'string<
-	     :key #'resource-selector))
+	     :key (lambda (resource)
+		    (pathname-name
+		     (resource-pathname resource)))))
     (format stream
 	    "~C~A~C~A~C~A~C~A~C~C"
 	    (resource-type resource)
@@ -208,6 +209,33 @@
 	     (t #'write-text-resource))
 	   stream
 	   pathname))
+
+(defun write-html-redirect (stream url)
+  (format stream "<html>
+<head>
+<meta http-equiv=\"refresh\" content=\"5; url=~A\">
+</head>
+<body>
+<p>
+The directory entry you selected was supposed to link to an HTTP-based
+website. Unfortunately, your gopher client is pathetic and doesn't
+support the hURL specification, so I've had to insert this shitty page
+into my Gopher server. I hope you're happy.
+</p>
+<p>
+If you're not redirected after 5 seconds of this loveliness, click the
+below link to the URL you tried (and failed) to access.
+</p>
+<p>
+The place you're supposed to be is: <a href=\"~A\">~A</a>
+</p>
+<p>
+Gopher ftw!!1
+</p>
+</body>
+</html>
+"
+	  url url url))
 
 (defun write-error (stream error)
   (format stream "~C~A~C~C~%~C~A~C~C"
@@ -255,10 +283,17 @@
 				     (otherwise nil)))
 				 (read-line request))))))
 		   (bad-pathname (condition)
-		     (write-error request
-				  (concatenate 'string
-					       "Bad selector: "
-					       (path condition)))))
+		     (let* ((path (path condition))
+			    (url-start
+			     (mismatch path "URL:" :test #'char=)))
+		       (if (= (or url-start 0) 4)
+			   (write-html-redirect
+			    request
+			    (subseq path url-start))
+			   (write-error request
+				    (concatenate 'string
+						 "Bad selector: "
+						 path))))))
 	       (socket-error () nil)
 	       (stream-error () nil))
 	     (socket-close client)))
