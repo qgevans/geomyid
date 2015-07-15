@@ -304,5 +304,5 @@ Gopher ftw!!1
 	  'string
 	  "Dying due to unknown error. Condition type: "
 	  (with-output-to-string (syslog)
-	    (princ (type-of condition)))))
+	    (princ (type-of condition) syslog))))
 	(socket-close socket)))))
