@@ -249,7 +249,7 @@ Gopher ftw!!1
 	(*port* port)
 	(socket (make-instance
 		 'inet-socket :type :stream :protocol :tcp)))
-    (setf (sockopt-reuse-address socket) t)
+    (setf (sockopt-reuse-port socket) t)
     (socket-bind socket
 		 (or
 		  address
@@ -291,18 +291,17 @@ Gopher ftw!!1
 			    request
 			    (subseq path url-start))
 			   (write-error request
-				    (concatenate 'string
-						 "Bad selector: "
-						 path))))))
+					(concatenate 'string
+						     "Bad selector: "
+						     path))))))
 	       (socket-error () nil)
 	       (stream-error () nil))
 	     (socket-close client)))
       (t (condition)
 	(sb-posix:syslog
 	 sb-posix:log-err
-	 (concatenate
-	  'string
-	  "Dying due to unknown error. Condition type: "
-	  (with-output-to-string (syslog)
-	    (princ (type-of condition) syslog))))
-	(socket-close socket)))))
+	 (format
+	  nil
+	  "Dying due to unknown error. Condition type: ~A"
+	  (type-of condition)))))
+	(socket-close socket)))
