@@ -262,42 +262,43 @@ Gopher ftw!!1
 
     (handler-case
 	(loop
-	   (let ((client (socket-accept socket)))
+	   (let* ((client (socket-accept socket))
+		  (request (socket-make-stream
+			    client
+			    :element-type :default
+			    :input t
+			    :output t)))
 	     (handler-case
-		 (let
-		   ((request (socket-make-stream
-			     client
-			     :element-type :default
-			     :input t
-			     :output t)))
-		   (handler-case
-		       (write-resource
-			request
-			(parse-selector
-			 (first
-			  (seqsep #\Tab
-				  (remove-if
-				   (lambda (item)
-				     (case item
-				       ((#\Return
-					 #\Linefeed) t)
-				       (otherwise nil)))
-				   (read-line request))))))
-		     (bad-pathname (condition)
-		       (let* ((path (path condition))
-			      (url-start
-			       (mismatch path "URL:" :test #'char=)))
-			 (if (= (or url-start 0) 4)
-			     (write-html-redirect
-			      request
-			      (subseq path url-start))
-			     (write-error request
-					  (concatenate 'string
-						       "Bad selector: "
-						       path)))))))
+		 (handler-case
+		     (write-resource
+		      request
+		      (parse-selector
+		       (first
+			(seqsep #\Tab
+				(remove-if
+				 (lambda (item)
+				   (case item
+				     ((#\Return
+				       #\Linefeed) t)
+				     (otherwise nil)))
+				 (read-line request))))))
+		   (bad-pathname (condition)
+		     (let* ((path (path condition))
+			    (url-start
+			     (mismatch path "URL:" :test #'char=)))
+		       (if (= (or url-start 0) 4)
+			   (write-html-redirect
+			    request
+			    (subseq path url-start))
+			   (write-error request
+					(concatenate 'string
+						     "Bad selector: "
+						     path))))))
 	       (socket-error () nil)
 	       (stream-error () nil))
-	     (socket-close client)))
+	     (handler-case
+		 (socket-close client)
+	       (stream-error () nil))))
       (t (condition)
 	(sb-posix:syslog
 	 sb-posix:log-err
