@@ -27,28 +27,31 @@
 
 ; Yes, I am aware that this looks like I sneezed on the contacts of a
 ; keyboard.
+#+(or freebsd linux)
 (defun get-extattr (pathname attrname)
   (with-alien ((data (array char 255)))
     (let ((attrlen
-	   #+(or freebsd linux) (alien-funcall (extern-alien
-						#+freebsd "extattr_get_file"
-						#+linux "getxattr"
-						(function int
-							  c-string
-							  #+freebsd int
-							  c-string
-							  (* (array char 255))
-							  unsigned))
-					       (native-namestring pathname)
-					       #+freebsd 1
-					       #+freebsd attrname
-					       #+linux (concatenate 'string "user." attrname)
-					       (addr data)
-					       255)))
+	   (alien-funcall (extern-alien
+			   #+freebsd "extattr_get_file"
+			   #+linux "getxattr"
+			   (function int
+				     c-string
+				     #+freebsd int
+				     c-string
+				     (* (array char 255))
+				     unsigned))
+			  (native-namestring pathname)
+			  #+freebsd 1
+			  #+freebsd attrname
+			  #+linux (concatenate 'string "user." attrname)
+			  (addr data)
+			  255)))
       (when (<= attrlen 0)
 	(error 'no-attr))
       (setf (deref data attrlen) 0)
       (cast data c-string))))
+#-(or freebsd linux)
+(eval-when (:compile-toplevel :load-toplevel :execute) (error "Operating system not supported"))
 
 ; This does not check existence of files or validity of pathnames, so
 ; you should only pass in results from (directory)
