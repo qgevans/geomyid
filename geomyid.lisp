@@ -41,7 +41,8 @@
 							  unsigned))
 					       (native-namestring pathname)
 					       #+freebsd 1
-					       attrname
+					       #+freebsd attrname
+					       #+linux (concatenate 'string "user." attrname)
 					       (addr data)
 					       255)))
       (when (<= attrlen 0)
