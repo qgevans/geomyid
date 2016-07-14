@@ -222,7 +222,7 @@
 		   (progn
 		     (sb-posix:access pathname sb-posix:x-ok)
 		     #'write-dynamic-resource)
-		 (t () (case (selector-type pathname)
+		 (sb-posix:syscall-error () (case (selector-type pathname)
 			 ((#\5
 			   #\9
 			   #\g
