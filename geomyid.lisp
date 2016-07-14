@@ -27,21 +27,22 @@
 
 ; Yes, I am aware that this looks like I sneezed on the contacts of a
 ; keyboard.
+(defconstant +extattr-buffer-length+ 255)
 (defun get-extattr (pathname attrname)
-  (with-alien ((data (array char 255)))
+  (with-alien ((data (array char +extattr-buffer-length+)))
     (let ((attrlen (alien-funcall (extern-alien
 				   "extattr_get_file"
 				   (function int
 					     c-string
 					     int
 					     c-string
-					     (* (array char 255))
+					     (* (array char +extattr-buffer-length+))
 					     unsigned))
 				  (native-namestring pathname)
 				  1
 				  attrname
 				  (addr data)
-				  255)))
+				  +extattr-buffer-length+)))
       (when (< attrlen 0)
 	(error 'no-attr))
       (setf (deref data attrlen) 0)
