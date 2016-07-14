@@ -278,12 +278,13 @@ Gopher ftw!!1
 	  #\i "Root directory listing follows:" #\Return #\Linefeed)
   (write-directory-resource stream *gopher-root*))
 
-(defun serve (root host-name &optional (port 70) (address nil))
+(defun serve (root host-name &key ((:port port) 70) ((:address address) nil) ((:debug debug) nil))
   (let ((*gopher-root* (probe-file root))
 	(*host* host-name)
 	(*port* port)
 	(socket (make-instance
 		 'inet-socket :type :stream :protocol :tcp)))
+    (setf (sockopt-reuse-address socket) t)
 ;    (setf (sockopt-reuse-port socket) t)
     (socket-bind socket
 		 (or
@@ -335,10 +336,12 @@ Gopher ftw!!1
 		 (socket-close client)
 	       (stream-error () nil))))
       (t (condition)
-	(sb-posix:syslog
-	 sb-posix:log-err
-	 (format
-	  nil
-	  "Dying due to unknown error. Condition type: ~A"
-	  (type-of condition)))))
+	(if debug
+	    (invoke-debugger condition)
+	    (sb-posix:syslog
+	     sb-posix:log-err
+	     (format
+	      nil
+	      "Dying due to unknown error. Condition type: ~A"
+	      (type-of condition))))))
 	(socket-close socket)))
