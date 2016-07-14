@@ -159,6 +159,14 @@
 			 (no-attr () *port*))
 		 :pathname pathname))
 
+(defun bad-resource (pathname error)
+  (make-resource :type #\3
+		 :title (format nil "Bad resource (~A): ~A" pathname error)
+		 :selector "none"
+		 :host "none"
+		 :port "0"
+		 :pathname pathname))
+
 (defun write-directory-resource (stream pathname)
   (handler-case
       (with-open-file
@@ -184,7 +192,10 @@
 		    (make-pathname
 		     :name :wild
 		     :type :wild)))
-		collecting (resource file))
+		collecting (handler-case
+			       (resource file)
+			     (bad-pathname (err)
+			       (bad-resource file err))))
 	     #'string<
 	     :key (lambda (resource)
 		    (pathname-name
