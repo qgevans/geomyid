@@ -4,8 +4,9 @@ Gopher server written in Common Lisp (for SBCL/FreeBSD)
 This software (rather intensively) uses unportable features from both SBCL and FreeBSD.
 The main unportable feature from FreeBSD is its extended attributes,
 of which all those used are in the "user" namespace (see getextattr(8) and extattr(2)).
-_I caved_ D: The stupid thing works on stupid Linux now. (still only SBCL)
 These are used to affect how files are displayed in directory listings.
+
+_I caved_ D: The stupid thing works on stupid Linux now. (still only SBCL)
 
 #### Extended attributes, their functions, and their defaults if not specified.
 ##### selector-type
