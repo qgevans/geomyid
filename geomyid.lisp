@@ -51,7 +51,7 @@
       (setf (deref data attrlen) 0)
       (cast data c-string))))
 #-(or freebsd linux)
-(eval-when (:compile-toplevel :load-toplevel :execute) (error "Operating system not supported"))
+(error "Operating system not supported")
 
 ; This does not check existence of files or validity of pathnames, so
 ; you should only pass in results from (directory)
