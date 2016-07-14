@@ -284,6 +284,8 @@ Gopher ftw!!1
 	(*port* port)
 	(socket (make-instance
 		 'inet-socket :type :stream :protocol :tcp)))
+    (unless *gopher-root*
+      (error "Root existeth not."))
     (setf (sockopt-reuse-address socket) t)
 ;    (setf (sockopt-reuse-port socket) t)
     (socket-bind socket
