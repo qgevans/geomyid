@@ -251,7 +251,7 @@ Gopher ftw!!1
 	(*port* port)
 	(socket (make-instance
 		 'inet-socket :type :stream :protocol :tcp)))
-    (setf (sockopt-reuse-port socket) t)
+;    (setf (sockopt-reuse-port socket) t)
     (socket-bind socket
 		 (or
 		  address
