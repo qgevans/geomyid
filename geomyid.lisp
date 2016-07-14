@@ -206,7 +206,7 @@
 
 (defun write-dynamic-resource (stream pathname)
   (let ((process (handler-case (sb-ext:run-program pathname nil :output :stream)
-		   (t (error) (format t "Unknown error: ~A~%" error) nil))))
+		   (t (error) (write-error stream error) nil))))
     (when process
       (let ((resource (sb-ext:process-output process)))
 	(handler-case (loop
