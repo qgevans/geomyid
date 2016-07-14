@@ -43,7 +43,7 @@
 				  attrname
 				  (addr data)
 				  +extattr-buffer-length+)))
-      (when (< attrlen 0)
+      (when (<= attrlen 0)
 	(error 'no-attr))
       (setf (deref data attrlen) 0)
       (cast data c-string))))
