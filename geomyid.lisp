@@ -204,15 +204,33 @@
   (format stream ".~C~C"
 	  #\Return #\Linefeed))
 
+(defun write-dynamic-resource (stream pathname)
+  (let ((process (handler-case (sb-ext:run-program pathname nil :output :stream)
+		   (t (error) (format t "Unknown error: ~A~%" error) nil))))
+    (when process
+      (let ((resource (sb-ext:process-output process)))
+	(handler-case (loop
+			 (format stream "~A~C~C"
+				 (read-line resource)
+				 #\Return #\Linefeed))
+	  (end-of-file ()
+	    (format stream ".~C~C" #\Return #\Linefeed)))))))
+
 (defun write-resource (stream pathname)
-  (funcall (case (selector-type pathname)
-	     ((#\5
-	       #\9
-	       #\g
-	       #\I
-	       #\s) #'write-binary-resource)
-	     (#\1 #'write-directory-resource)
-	     (t #'write-text-resource))
+  (funcall (if (pathname-name pathname)
+	       (handler-case
+		   (progn
+		     (sb-posix:access pathname sb-posix:x-ok)
+		     #'write-dynamic-resource)
+		 (t () (case (selector-type pathname)
+			 ((#\5
+			   #\9
+			   #\g
+			   #\I
+			   #\s) #'write-binary-resource)
+			 (#\1 #'write-text-resource)
+			 (t #'write-text-resource))))
+	       #'write-directory-resource)
 	   stream
 	   pathname))
 
