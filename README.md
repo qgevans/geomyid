@@ -8,6 +8,9 @@ These are used to affect how files are displayed in directory listings.
 
 _I caved_ D: The stupid thing works on stupid Linux now. (still only SBCL)
 
+Now depends on solipsism (https://github.com/heddwch/solipsism) just to make it more
+of a pain in the ass. You're welcome. :D
+
 #### Extended attributes, their functions, and their defaults if not specified.
 ##### selector-type
 The Gopher type for a resource. Autodetected based upon file extension, falling back to '0' for files and '1' for directories.

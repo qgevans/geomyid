@@ -16,15 +16,6 @@
 (define-condition bad-pathname (error)
   ((path :initarg :path :reader path)))
 
-(defun seqsep (item sequence)
-  (let* ((position (position item sequence))
-	 (subseq (subseq sequence 0 position))
-	 (next (when position
-		 (seqsep item (subseq sequence (+ position 1))))))
-    (if (emptyp subseq)
-	next
-	(cons subseq next))))
-
 ; Yes, I am aware that this looks like I sneezed on the contacts of a
 ; keyboard.
 #+(or freebsd linux)

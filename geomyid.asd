@@ -6,6 +6,7 @@
   :author "Quinn Evans <heddwch@lambdaos.org>"
   :license "2-clause BSD"
   :depends-on (#:alexandria
+	       #:solipsism
 	       #:sb-bsd-sockets
 	       #:sb-posix)
   :components ((:file "package")
