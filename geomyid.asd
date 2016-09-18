@@ -10,4 +10,5 @@
 	       #:sb-bsd-sockets
 	       #:sb-posix)
   :components ((:file "package")
-	       (:file "geomyid" :depends-on ("package"))))
+	       (:file "resource" :depends-on ("package"))
+	       (:file "serve" :depends-on ("resource" "package"))))

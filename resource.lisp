@@ -1,9 +1,5 @@
 (in-package :geomyid)
 
-(defvar *gopher-root*)
-(defvar *host*)
-(defvar *port*)
-
 (defstruct resource
   type
   title
@@ -66,23 +62,6 @@
 	 (otherwise #\0)))
       #\1))
 
-(defun write-text-resource (stream pathname)
-  (with-open-file (resource pathname)
-    (handler-case (loop
-		     (format stream "~A~C~C"
-			     (read-line resource)
-			     #\Return #\Linefeed))
-      (end-of-file ()
-	(format stream ".~C~C" #\Return #\Linefeed)))))
-
-(defun write-binary-resource (stream pathname)
-  (with-open-file
-      (resource pathname :element-type 'unsigned-byte)
-    (handler-case (loop
-		     (write-byte (read-byte resource) stream))
-      (end-of-file ()
-	nil))))
-
 (defun selector (pathname)
   (let ((selector "")
 	(index (mismatch (pathname-directory pathname)
@@ -109,6 +88,23 @@
 				  "."
 				  (pathname-type pathname))))
     selector))
+
+(defun write-text-resource (stream pathname)
+  (with-open-file (resource pathname)
+    (handler-case (loop
+		     (format stream "~A~C~C"
+			     (read-line resource)
+			     #\Return #\Linefeed))
+      (end-of-file ()
+	(format stream ".~C~C" #\Return #\Linefeed)))))
+
+(defun write-binary-resource (stream pathname)
+  (with-open-file
+      (resource pathname :element-type 'unsigned-byte)
+    (handler-case (loop
+		     (write-byte (read-byte resource) stream))
+      (end-of-file ()
+	nil))))
 
 (defun parse-selector (selector)
   (multiple-value-bind (name type)
@@ -235,106 +231,3 @@
 	       #'write-directory-resource)
 	   stream
 	   pathname))
-
-(defun write-html-redirect (stream url)
-  (format stream "<html>
-<head>
-<meta http-equiv=\"refresh\" content=\"5; url=~A\">
-</head>
-<body>
-<p>
-The directory entry you selected was supposed to link to an HTTP-based
-website. Unfortunately, your gopher client is pathetic and doesn't
-support the hURL specification, so I've had to insert this shitty page
-into my Gopher server. I hope you're happy.
-</p>
-<p>
-If you're not redirected after 5 seconds of this loveliness, click the
-below link to the URL you tried (and failed) to access.
-</p>
-<p>
-The place you're supposed to be is: <a href=\"~A\">~A</a>
-</p>
-<p>
-Gopher ftw!!1
-</p>
-</body>
-</html>
-"
-	  url url url))
-
-(defun write-error (stream error)
-  (format stream "~C~A~C~C~%~C~A~C~C"
-	  #\3 error #\Return #\Linefeed
-	  #\i "Root directory listing follows:" #\Return #\Linefeed)
-  (write-directory-resource stream *gopher-root*))
-
-(defun serve (root host-name &key ((:port port) 70) ((:address address) nil) ((:debug debug) nil))
-  (let ((*gopher-root* (probe-file root))
-	(*host* host-name)
-	(*port* port)
-	(socket (make-instance
-		 'inet-socket :type :stream :protocol :tcp)))
-    (unless *gopher-root*
-      (error "Root existeth not."))
-    (setf (sockopt-reuse-address socket) t)
-;    (setf (sockopt-reuse-port socket) t)
-    (socket-bind socket
-		 (or
-		  address
-		  (host-ent-address
-		   (get-host-by-name *host*)))
-		 port)
-    (socket-listen socket 20)
-    (sb-posix:setgid (sb-posix:getgid))
-    (sb-posix:setuid (sb-posix:getuid))
-
-    (handler-case
-	(loop
-	   (let* ((client (socket-accept socket))
-		  (request (socket-make-stream
-			    client
-			    :element-type :default
-			    :input t
-			    :output t)))
-	     (handler-case
-		 (handler-case
-		     (write-resource
-		      request
-		      (parse-selector
-		       (first
-			(seqsep #\Tab
-				(remove-if
-				 (lambda (item)
-				   (case item
-				     ((#\Return
-				       #\Linefeed) t)
-				     (otherwise nil)))
-				 (read-line request))))))
-		   (bad-pathname (condition)
-		     (let* ((path (path condition))
-			    (url-start
-			     (mismatch path "URL:" :test #'char=)))
-		       (if (= (or url-start 0) 4)
-			   (write-html-redirect
-			    request
-			    (subseq path url-start))
-			   (write-error request
-					(concatenate 'string
-						     "Bad selector: "
-						     path))))))
-	       (socket-error () nil)
-	       (stream-error () nil))
-	     (handler-case
-		 (socket-close client)
-	       (stream-error () nil))))
-      (t (condition)
-	(if debug
-	    (invoke-debugger condition)
-	    (sb-posix:syslog
-	     sb-posix:log-err
-	     (format
-	      nil
-	      "Dying due to unknown error. Condition type: ~A"
-	      (type-of condition))))))
-	(socket-close socket)))
