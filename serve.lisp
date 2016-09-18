@@ -43,7 +43,9 @@ Gopher ftw!!1
 			    client
 			    :element-type :default
 			    :input t
-			    :output t)))
+			    :output t
+			    :timeout 5
+			    :auto-close t)))
 	(handler-case
 	    (write-resource
 	     client-stream
@@ -88,7 +90,7 @@ Gopher ftw!!1
 	    (error "Root existeth not."))
 	  (setf socket (make-instance 'inet-socket :type :stream :protocol :tcp))
 	  (setf (sockopt-reuse-address socket) t)
-					;     (setf (sockopt-reuse-port socket) t)
+;         (setf (sockopt-reuse-port socket) t)
 	  (socket-bind socket
 		       (or
 			address
