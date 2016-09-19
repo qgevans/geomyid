@@ -10,5 +10,6 @@
 	       #:sb-bsd-sockets
 	       #:sb-posix)
   :components ((:file "package")
-	       (:file "resource" :depends-on ("package"))
-	       (:file "serve" :depends-on ("resource" "package"))))
+	       (:file "specials" :depends-on ("package"))
+	       (:file "resource" :depends-on ("specials"))
+	       (:file "serve" :depends-on ("specials" "resource"))))
