@@ -220,14 +220,15 @@
 		   (progn
 		     (sb-posix:access pathname sb-posix:x-ok)
 		     #'write-dynamic-resource)
-		 (sb-posix:syscall-error () (case (selector-type pathname)
-			 ((#\5
-			   #\9
-			   #\g
-			   #\I
-			   #\s) #'write-binary-resource)
-			 (#\1 #'write-text-resource)
-			 (t #'write-text-resource))))
+		 (sb-posix:syscall-error ()
+		   (case (selector-type pathname)
+		     ((#\5
+		       #\9
+		       #\g
+		       #\I
+		       #\s) #'write-binary-resource)
+		     (#\1 #'write-text-resource)
+		     (t #'write-text-resource))))
 	       #'write-directory-resource)
 	   stream
 	   pathname))

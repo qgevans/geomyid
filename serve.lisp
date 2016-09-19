@@ -4,6 +4,9 @@
 (defvar *host*)
 (defvar *port*)
 
+#+sb-thread (defconstant +threads+ 10)
+#+sb-thread (defvar *clients* (make-queue))
+
 (defun write-html-redirect (stream url)
   (format stream "<html>
 <head>
@@ -75,17 +78,35 @@ Gopher ftw!!1
 	       (socket-error () nil)
 	       (stream-error () nil)))
 
-(defun serve-clients (socket)
+#+sb-thread (defun serve-clients (socket num-threads)
+	      (loop for thread from 1 to num-threads do
+		   (make-thread
+		    (lambda ()
+		      (loop
+			 (let ((client (queue-receive *clients*)))
+			   (if client
+			       (serve-client client)
+			       (return)))))
+		    :name (write-to-string thread)))
+		(handler-case
+		    (loop (queue-send *clients* (socket-accept socket)))
+		  (t (condition)
+		    (dotimes (thread num-threads)
+		      (queue-send *clients* nil))
+		    (error condition))))
+
+#-sb-thread (defun serve-clients (socket)
   (loop
      (serve-client (socket-accept socket))))
 
-(defun serve (root host-name &key ((:port port) 70) ((:address address) nil) ((:debug debug) nil))
-  (let ((*host* host-name)
-	(*port* port)
-	socket)
+(defun serve (root host-name &key ((:port port) 70) ((:address address) nil) ((:debug debug) nil)
+			       #+sb-thread ((:threads threads) +threads+))
+  (let (socket)
     (handler-case
 	(progn
 	  (setf *gopher-root* (probe-file root))
+	  (setf *host* host-name)
+	  (setf *port* port)
 	  (unless *gopher-root*
 	    (error "Root existeth not."))
 	  (setf socket (make-instance 'inet-socket :type :stream :protocol :tcp))
@@ -100,7 +121,7 @@ Gopher ftw!!1
 	  (socket-listen socket 20)
 	  (sb-posix:setgid (sb-posix:getgid))
 	  (sb-posix:setuid (sb-posix:getuid))
-	  (serve-clients socket))
+	  (serve-clients socket #+sb-thread threads))
       (t (condition)
 	(if debug
 	    (invoke-debugger condition)
@@ -108,6 +129,6 @@ Gopher ftw!!1
 	     sb-posix:log-err
 	     (format
 	      nil
-	      "Dying due to unknown error. Condition type: ~A"
-	      (type-of condition))))))
+	      "Dying due to unknown error. Condition: ~A"
+	      (print condition))))))
     (socket-close socket)))
