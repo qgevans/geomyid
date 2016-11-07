@@ -37,7 +37,21 @@
 	(error 'no-attr))
       (setf (deref data attrlen) 0)
       (cast data c-string))))
-#-(or freebsd linux)
+#+win32
+(defun get-extattr (pathname attrname)
+  (let* ((attr-path (concatenate 'string
+				 (namestring pathname)
+				 ":"
+				 attrname))
+	 (attr (remove #\Return
+		       (handler-case
+			   (with-open-file (attr attr-path)
+			     (read-line attr))
+			 (file-error () (error 'no-attr))))))
+    (unless (> (length attr) 0)
+      (error 'no-attr))
+    attr))
+#-(or freebsd linux win32)
 (error "Operating system not supported")
 
 ; This does not check existence of files or validity of pathnames, so
@@ -214,13 +228,23 @@
 	  (end-of-file ()
 	    (format stream ".~C~C" #\Return #\Linefeed)))))))
 
+(defun executable-p (pathname)
+  #+unix
+  (handler-case
+      (progn
+	(sb-posix:access pathname sb-posix:x-ok)
+	t)
+    (sb-posix:syscall-error () nil))
+  #+win32
+  (switch ((pathname-type pathname) :test 'equalp)
+    ("exe" t)
+    ("cmd" t)
+    ("bat" t)))
+
 (defun write-resource (stream pathname)
   (funcall (if (pathname-name pathname)
-	       (handler-case
-		   (progn
-		     (sb-posix:access pathname sb-posix:x-ok)
-		     #'write-dynamic-resource)
-		 (sb-posix:syscall-error ()
+	       (if (executable-p pathname)
+		   #'write-dynamic-resource
 		   (case (selector-type pathname)
 		     ((#\5
 		       #\9
@@ -228,7 +252,7 @@
 		       #\I
 		       #\s) #'write-binary-resource)
 		     (#\1 #'write-text-resource)
-		     (t #'write-text-resource))))
+		     (t #'write-text-resource)))
 	       #'write-directory-resource)
 	   stream
 	   pathname))

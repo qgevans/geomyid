@@ -8,6 +8,8 @@ These are used to affect how files are displayed in directory listings.
 
 _I caved_ D: The stupid thing works on stupid Linux now (still only SBCL). Extended
 attributes are the same, but prefixed with "user." because Linux.
+It gets worse. It's been ported to _Windows_, of all things. Extended attributes are
+the same, just implemented as Alternate Data Streams.
 
 Now depends on solipsism (https://github.com/heddwch/solipsism) just to make it more
 of a pain in the ass. You're welcome. :D

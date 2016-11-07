@@ -104,7 +104,7 @@ Gopher ftw!!1
 	    (error "Root existeth not."))
 	  (setf socket (make-instance 'inet-socket :type :stream :protocol :tcp))
 	  (setf (sockopt-reuse-address socket) t)
-;         (setf (sockopt-reuse-port socket) t)
+					;         (setf (sockopt-reuse-port socket) t)
 	  (socket-bind socket
 		       (or
 			address
@@ -112,16 +112,24 @@ Gopher ftw!!1
 			 (get-host-by-name *host*)))
 		       port)
 	  (socket-listen socket 20)
-	  (sb-posix:setgid (sb-posix:getgid))
-	  (sb-posix:setuid (sb-posix:getuid))
+	  #+unix
+	  (progn
+	    (sb-posix:setgid (sb-posix:getgid))
+	    (sb-posix:setuid (sb-posix:getuid)))
 	  (serve-clients socket #+sb-thread threads))
       (t (condition)
 	(if debug
 	    (invoke-debugger condition)
+	    #+unix
 	    (sb-posix:syslog
 	     sb-posix:log-err
 	     (format
 	      nil
 	      "Dying due to unknown error. Condition: ~A"
-	      (print condition))))))
+	      condition))
+	    #-unix
+	    (format
+	     t
+	     "Dying due to unknown error. Condition: ~A"
+	     condition))))
     (socket-close socket)))
