@@ -6,7 +6,8 @@ The main unportable feature from FreeBSD is its extended attributes,
 of which all those used are in the "user" namespace (see getextattr(8) and extattr(2)).
 These are used to affect how files are displayed in directory listings.
 
-_I caved_ D: The stupid thing works on stupid Linux now. (still only SBCL)
+_I caved_ D: The stupid thing works on stupid Linux now (still only SBCL). Extended
+attributes are the same, but prefixed with "user." because Linux.
 
 Now depends on solipsism (https://github.com/heddwch/solipsism) just to make it more
 of a pain in the ass. You're welcome. :D
